@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head><title>Login - Mind of Milkshakes</title><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
+    .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
+    input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+</style></head>
+<body>
+<div class="card">
+    <h2 style="text-align: center;">🍦 Milkshake Login</h2>
+    <input type="number" id="phone" placeholder="Phone Number">
+    <input type="password" id="pass" placeholder="Password">
+    <button onclick="login()" style="background: #2ed573; color: white;">Login</button>
+    <select id="role"><option value="customer">Customer</option><option value="rider">Rider</option><option value="admin">Owner</option></select>
+    <button onclick="register()" style="background: #747d8c; color: white;">Create Account</button>
+</div>
+<script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://gstatic.com";
+    import { getFirestore, doc, setDoc, getDoc } from "https://gstatic.com";
+    const firebaseConfig = { apiKey: "AIzaSyCtBB9W_nAc2AYLAfSg4XCfHfoqNb6uqZ4", authDomain: "://firebaseapp.com", projectId: "mind-of-milkshakes-517cd" };
+    const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
+
+    window.register = async () => {
+        const ph = document.getElementById("phone").value; const pw = document.getElementById("pass").value; const r = document.getElementById("role").value;
+        try {
+            const res = await createUserWithEmailAndPassword(auth, ph + "@m.com", pw);
+            await setDoc(doc(db, "users", res.user.uid), { phone: ph, role: r });
+            alert("Registered! Now Login.");
+        } catch (e) { alert(e.message); }
+    };
+
+    window.login = async () => {
+        try {
+            const res = await signInWithEmailAndPassword(auth, document.getElementById("phone").value + "@m.com", document.getElementById("pass").value);
+            const u = await getDoc(doc(db, "users", res.user.uid));
+            window.location.href = u.data().role + ".html";
+        } catch (e) { alert("Check phone/password"); }
+    };
+</script></body></html>

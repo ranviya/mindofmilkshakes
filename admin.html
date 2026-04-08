@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html><head><title>Admin Dashboard</title><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body { font-family: sans-serif; background: #2c3e50; color: white; padding: 15px; }
+    .card { background: white; color: black; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+</style></head>
+<body>
+    <h2>👑 Owner Panel</h2>
+    <div style="background:#34495e; padding:10px; border-radius:10px; margin-bottom:20px;">
+        Total Revenue: ₹<span id="rev">0</span> | Commission (₹20/Order): ₹<span id="com">0</span>
+    </div>
+    
+    <div class="card">
+        <h3>Add Menu Item</h3>
+        <input id="in" placeholder="Name"> <input id="ip" placeholder="Price" type="number">
+        <input id="ic" placeholder="Category"> <input id="ii" placeholder="Image URL">
+        <button onclick="addItem()" style="width:100%; background:green; color:white;">Save Item</button>
+    </div>
+
+    <div id="orders"></div>
+    <audio id="beep" src="https://mixkit.co"></audio>
+
+<script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, addDoc } from "https://gstatic.com";
+    const firebaseConfig = { apiKey: "AIzaSyCtBB9W_nAc2AYLAfSg4XCfHfoqNb6uqZ4", authDomain: "://firebaseapp.com", projectId: "mind-of-milkshakes-517cd" };
+    const app = initializeApp(firebaseConfig); const db = getFirestore(app);
+
+    window.addItem = async () => {
+        await addDoc(collection(db, "menu"), { name: document.getElementById("in").value, price: Number(document.getElementById("ip").value), 
+        category: document.getElementById("ic").value, img: document.getElementById("ii").value });
+        alert("Added!");
+    };
+
+    let initial = true;
+    onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), s => {
+        const div = document.getElementById("orders"); div.innerHTML = "";
+        let rev = 0; let com = 0;
+        s.docChanges().forEach(c => { if(c.type==="added" && !initial) document.getElementById("beep").play(); });
+        initial = false;
+        s.forEach(d => { const o = d.data(); rev += o.total; com += 20;
+            div.innerHTML += `<div class="card"><strong>Items:</strong> ${o.milkshake.map(m=>m.name).join(", ")}<br>
+            <strong>Status:</strong> ${o.status}<br>
+            <button onclick="upd('${d.id}','Accepted')">Accept</button> <button onclick="upd('${d.id}','Rejected')">Reject</button></div>`;
+        });
+        document.getElementById("rev").innerText = rev; document.getElementById("com").innerText = com;
+    });
+
+    window.upd = async (id, s) => { await updateDoc(doc(db, "orders", id), { status: s }); };
+</script></body></html>

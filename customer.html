@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html><head><title>Customer App</title><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body { font-family: sans-serif; padding: 15px; background: #f9f9f9; }
+    .item { background: white; padding: 10px; margin-bottom: 10px; border-radius: 12px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .item img { width: 70px; height: 70px; border-radius: 10px; margin-right: 15px; object-fit: cover; }
+    .status-bar { background: #fff3cd; padding: 10px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+</style></head>
+<body>
+    <div id="active-order" class="status-bar" style="display:none;">Status: <span id="st">Pending</span></div>
+    <h2>🥤 Our Menu</h2>
+    <div id="menu"></div>
+    <div style="background:white; padding:15px; margin-top:20px; border-radius:15px;">
+        <input type="text" id="promo" placeholder="Coupon Code"> <button onclick="applyCpn()">Apply</button>
+        <p>Subtotal: ₹<span id="sub">0</span> | Discount: -₹<span id="dis">0</span></p>
+        <p><strong>Total: ₹<span id="tot">0</span></strong></p>
+        <input type="text" id="addr" placeholder="House No / Landmark" style="width:100%; padding:10px; box-sizing:border-box;">
+        <button onclick="order()" style="width:100%; padding:15px; background:green; color:white; margin-top:10px; border:none; border-radius:10px;">Place Order</button>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getAuth, onAuthStateChanged } from "https://gstatic.com";
+    import { getFirestore, collection, onSnapshot, addDoc, getDocs, serverTimestamp, query, where, limit, orderBy } from "https://gstatic.com";
+    const firebaseConfig = { apiKey: "AIzaSyCtBB9W_nAc2AYLAfSg4XCfHfoqNb6uqZ4", authDomain: "://firebaseapp.com", projectId: "mind-of-milkshakes-517cd" };
+    const app = initializeApp(firebaseConfig); const db = getFirestore(app); const auth = getAuth(app);
+
+    let cart = {}; let disc = 0; let phone = "";
+
+    onAuthStateChanged(auth, u => { if(!u) return window.location.href="login.html"; phone = u.email.split("@")[0]; trackStatus(); });
+
+    onSnapshot(collection(db, "menu"), s => {
+        const div = document.getElementById("menu"); div.innerHTML = "";
+        s.forEach(d => { const m = d.data();
+            div.innerHTML += `<div class="item"><img src="${m.img}"><div><strong>${m.name}</strong><br>₹${m.price}</div>
+            <div style="margin-left:auto;"><button onclick="qty('${m.name}',${m.price},1)">+</button> <span id="q-${m.name}">0</span> <button onclick="qty('${m.name}',${m.price},-1)">-</button></div></div>`;
+        });
+    });
+
+    window.qty = (n, p, c) => {
+        if(!cart) cart = { qty:0, price:p }; cart.qty += c; if(cart.qty <= 0) delete cart;
+        let s = 0; for(let x in cart) s += cart[x].qty * cart[x].price;
+        document.getElementById("sub").innerText = s; document.getElementById("tot").innerText = s - disc;
+        if(document.getElementById("q-"+n)) document.getElementById("q-"+n).innerText = cart?.qty || 0;
+    };
+
+    window.applyCpn = async () => {
+        const inp = document.getElementById("promo").value.toUpperCase();
+        const snap = await getDocs(collection(db, "Coupons"));
+        snap.forEach(d => { if(d.data().code === inp) { disc = Number(d.data().discount); alert("Coupon Applied!"); } });
+        window.qty("",0,0);
+    };
+
+    window.order = () => {
+        navigator.geolocation.getCurrentPosition(async p => {
+            await addDoc(collection(db, "orders"), {
+                milkshake: Object.keys(cart).map(k => ({name:k, price:cart[k].price, qty:cart[k].qty})),
+                total: Number(document.getElementById("tot").innerText),
+                address: document.getElementById("addr").value, phone, status: "Pending", payment: "COD",
+                lat: p.coords.latitude, lng: p.coords.longitude, timestamp: serverTimestamp()
+            });
+            alert("Order Placed!"); location.reload();
+        });
+    };
+
+    function trackStatus() {
+        const q = query(collection(db, "orders"), where("phone", "==", phone), orderBy("timestamp", "desc"), limit(1));
+        onSnapshot(q, s => s.forEach(d => { 
+            document.getElementById("active-order").style.display = "block";
+            document.getElementById("st").innerText = d.data().status;
+        }));
+    }
+</script></body></html>

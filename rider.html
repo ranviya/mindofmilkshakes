@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html><head><title>Rider Panel</title></head>
+<body style="font-family: sans-serif; padding: 15px;">
+    <h2>🚴 Rider Dashboard</h2>
+    <div id="list"></div>
+<script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc } from "https://gstatic.com";
+    const firebaseConfig = { apiKey: "AIzaSyCtBB9W_nAc2AYLAfSg4XCfHfoqNb6uqZ4", authDomain: "://firebaseapp.com", projectId: "mind-of-milkshakes-517cd" };
+    const app = initializeApp(firebaseConfig); const db = getFirestore(app);
+
+    onSnapshot(query(collection(db, "orders"), where("status", "==", "Accepted")), s => {
+        const div = document.getElementById("list"); div.innerHTML = "";
+        s.forEach(d => { const o = d.data();
+            div.innerHTML += `<div style="border:1px solid #ddd; padding:15px; margin-bottom:10px; border-radius:12px;">
+                <strong>House:</strong> ${o.address}<br>
+                <a href="https://google.com{o.lat},${o.lng}" target="_blank">📍 Open GPS</a><br>
+                <button onclick="upd('${d.id}','Out for Delivery')">Out for Delivery</button>
+                <button onclick="upd('${d.id}','Delivered')">Mark Delivered</button></div>`;
+        });
+    });
+    window.upd = async (id, s) => { await updateDoc(doc(db, "orders", id), { status: s }); };
+</script></body></html>
