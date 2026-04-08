@@ -20,4 +20,9 @@
         });
     });
     window.upd = async (id, s) => { await updateDoc(doc(db, "orders", id), { status: s }); };
-</script></body></html>
+</script></body><nav style="background: #2c3e50; padding: 12px; display: flex; justify-content: space-around; border-radius: 10px; margin-bottom: 20px;">
+    <a href="admin.html" style="color: white; text-decoration: none; font-weight: bold;">🧑‍🍳 Owner</a>
+    <a href="rider.html" style="color: white; text-decoration: none; font-weight: bold;">🏍️ Rider</a>
+    <a href="index.html" style="color: #bdc3c7; text-decoration: none;">Logout</a>
+</nav>
+</html>
