@@ -27,7 +27,7 @@
 
     let cart = {}; let disc = 0; let phone = "";
 
-    onAuthStateChanged(auth, u => { if(!u) return window.location.href="login.html"; phone = u.email.split("@")[0]; trackStatus(); });
+    onAuthStateChanged(auth, u => { if(!u) return window.location.href="index.html"; phone = u.email.split("@")[0]; trackStatus(); });
 
     onSnapshot(collection(db, "menu"), s => {
         const div = document.getElementById("menu"); div.innerHTML = "";
